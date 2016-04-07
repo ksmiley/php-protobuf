@@ -259,7 +259,8 @@ PHP_METHOD(ProtobufMessage, parseFromString)
 	uint8_t wire_type;
 	zend_ulong field_number;
 	long bool_value;
-	int expected_wire_type, str_size, pack_size, subpack_size, ret;
+	size_t pack_size;
+	int expected_wire_type, str_size, subpack_size, ret;
 	zval arg, *args, *field_descriptor, *field_type, *field_descriptors, name, *old_value, *value, blank_value, *values, zret;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &pack, &pack_size) == FAILURE)
@@ -458,7 +459,7 @@ PHP_METHOD(ProtobufMessage, serializeToString)
 			goto fail;
 
 		if (Z_TYPE_P(value) == IS_NULL) {
-			required = zend_hash_str_find(Z_ARRVAL_P(field_descriptor), PB_FIELD_REQUIRED, sizeof(PB_FIELD_REQUIRED));
+			required = zend_hash_str_find(Z_ARRVAL_P(field_descriptor), PB_FIELD_REQUIRED, sizeof(PB_FIELD_REQUIRED) - 1);
 			if (required == NULL) {
 				PB_COMPILE_ERROR("missing '%s' field required property in field descriptor", pb_get_field_name(getThis(), field_number));
 				goto fail;
@@ -581,8 +582,8 @@ PHP_MINIT_FUNCTION(protobuf)
 {
 	zend_class_entry ce;
 
-	PB_FIELD_TYPE_HASH = zend_string_init(PB_FIELD_TYPE, sizeof(PB_FIELD_TYPE), 1);
-	PB_VALUES_PROPERTY_HASH = zend_string_init(PB_VALUES_PROPERTY, sizeof(PB_VALUES_PROPERTY), 1);
+	PB_FIELD_TYPE_HASH = zend_string_init(PB_FIELD_TYPE, sizeof(PB_FIELD_TYPE) - 1, 1);
+	PB_VALUES_PROPERTY_HASH = zend_string_init(PB_VALUES_PROPERTY, sizeof(PB_VALUES_PROPERTY) - 1, 1);
 
 	INIT_CLASS_ENTRY(ce, "ProtobufMessage", pb_methods);
 	pb_entry = zend_register_internal_class(&ce TSRMLS_CC);
@@ -792,7 +793,7 @@ static const char *pb_get_field_name(zval *this, zend_ulong field_number)
 	if ((field_descriptor = pb_get_field_descriptor(this, field_descriptors, field_number)) == NULL)
 		return NULL;
 
-	field_name = zend_hash_str_find(Z_ARRVAL_P(field_descriptor), PB_FIELD_NAME, sizeof(PB_FIELD_NAME));
+	field_name = zend_hash_str_find(Z_ARRVAL_P(field_descriptor), PB_FIELD_NAME, sizeof(PB_FIELD_NAME) - 1);
 	if (field_name == NULL) {
 		PB_COMPILE_ERROR_EX(this, "missing %u field name property in field descriptor", field_number);
 		return NULL;
